@@ -1,0 +1,132 @@
+version: "3.8"
+
+networks:
+  solidarytech-net:
+    driver: bridge
+
+services:
+
+  # ---------- PostgreSQL: NGO Service ----------
+  ngo-db:
+    image: postgres:15-alpine
+    container_name: ngo-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ngo_db
+    ports:
+      - "5443:5432"
+    volumes:
+      - ./ngo-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ngo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ngo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [solidarytech-net]
+
+  # ---------- PostgreSQL: Donation Service ----------
+  donation-db:
+    image: postgres:15-alpine
+    container_name: donation-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: donation_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./donation-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - donation-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d donation_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [solidarytech-net]
+
+  # ---------- LocalStack: emulates AWS SQS + DynamoDB ----------
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: "sqs,dynamodb"
+      DEFAULT_REGION: "us-east-1"
+      AWS_DEFAULT_REGION: "us-east-1"
+      PERSISTENCE: 1
+    volumes:
+      - ./localstack-init/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks: [solidarytech-net]
+
+  # ---------- NGO Service (Python/Flask) ----------
+  ngo-service:
+    build:
+      context: ./ngo-service
+      dockerfile: Dockerfile
+    container_name: ngo-service
+    environment:
+      PORT: 8081
+      DATABASE_URL: "postgres://postgres:postgres@ngo-db:5432/ngo_db"
+    ports:
+      - "8081:8081"
+    depends_on:
+      ngo-db:
+        condition: service_healthy
+    networks: [solidarytech-net]
+
+  # ---------- Donation Service (Go) ----------
+  donation-service:
+    build:
+      context: ./donation-service
+      dockerfile: Dockerfile
+    container_name: donation-service
+    environment:
+      PORT: 8082
+      DATABASE_URL: "postgres://postgres:postgres@donation-db:5432/donation_db"
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "test"
+      AWS_SECRET_ACCESS_KEY: "test"
+      AWS_SQS_URL: "http://localstack:4566/000000000000/solidary-donations"
+      AWS_ENDPOINT_URL: "http://localstack:4566"
+    ports:
+      - "8082:8082"
+    depends_on:
+      donation-db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks: [solidarytech-net]
+
+  # ---------- Volunteer Service (Python/Flask + DynamoDB) ----------
+  volunteer-service:
+    build:
+      context: ./volunteer-service
+      dockerfile: Dockerfile
+    container_name: volunteer-service
+    environment:
+      PORT: 8083
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "test"
+      AWS_SECRET_ACCESS_KEY: "test"
+      AWS_DYNAMODB_TABLE: "SolidaryTechVolunteers"
+      AWS_ENDPOINT_URL: "http://localstack:4566"
+    ports:
+      - "8083:8083"
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks: [solidarytech-net]
+
+volumes:
+  ngo-db-data:
+  donation-db-data:
+  localstack-data:
