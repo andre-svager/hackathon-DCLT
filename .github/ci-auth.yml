@@ -1,0 +1,33 @@
+name: CI - Auth Service (Go)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'auth-service/**'
+      - '.github/workflows/ci-auth.yml'
+      - '.github/workflows/ci-go-reusable.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'auth-service/**'
+      - '.github/workflows/ci-auth.yml'
+      - '.github/workflows/ci-go-reusable.yml'
+      
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+jobs:
+  call-go-ci:
+    uses: ./.github/workflows/ci-go-reusable.yml
+    with:
+      service_name: auth-service
+      service_path: auth-service
+      go_version: '1.21'
+    secrets:
+      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+      aws_region: ${{ secrets.AWS_REGION }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

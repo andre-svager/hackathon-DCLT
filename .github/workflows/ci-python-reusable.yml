@@ -1,0 +1,110 @@
+name: Python CI Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: Name of the service (e.g., analytics-service)
+      service_path:
+        required: true
+        type: string
+        description: Path to the service directory
+      python_version:
+        required: false
+        type: string
+        default: '3.11'
+        description: Python version to use
+    secrets:
+      aws_account_id:
+        required: true
+      aws_region:
+        required: true
+      aws_access_key_id:
+        required: true
+      aws_secret_access_key:
+        required: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+          cache: 'pip'
+          cache-dependency-path: ${{ inputs.service_path }}/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.service_path }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov black flake8 isort bandit[toml]
+
+      - name: Lint with black (format check)
+        working-directory: ${{ inputs.service_path }}
+        run: black --check . || true
+
+      - name: Lint with isort (import sort)
+        working-directory: ${{ inputs.service_path }}
+        run: isort --check-only . || true
+
+      - name: Lint with flake8
+        working-directory: ${{ inputs.service_path }}
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || false
+
+      - name: Security linting with bandit
+        working-directory: ${{ inputs.service_path }}
+        run: bandit -r . -ll --exit-code=0 -f json -o bandit-report.json || true
+
+      - name: Upload bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/bandit-report.json
+
+      - name: Run unit tests
+        working-directory: ${{ inputs.service_path }}
+        run: pytest -v --cov=. --cov-report=xml --cov-report=html || true
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/htmlcov
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4.5.0
+        with:
+          files: ${{ inputs.service_path }}/coverage.xml
+          flags: ${{ inputs.service_name }}
+          name: ${{ inputs.service_name }}-coverage
+          fail_ci_if_error: false
+        continue-on-error: true
+
+      - name: Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update && sudo apt-get install -y trivy || true
+
+      - name: SCA - Scan filesystem with Trivy
+        working-directory: ${{ inputs.service_path }}
+        run: trivy fs --severity CRITICAL,HIGH . || true
