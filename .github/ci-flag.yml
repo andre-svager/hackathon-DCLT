@@ -1,0 +1,33 @@
+name: CI - Flag Service (Python)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'flag-service/**'
+      - '.github/workflows/ci-flag.yml'
+      - '.github/workflows/ci-python-reusable.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'flag-service/**'
+      - '.github/workflows/ci-flag.yml'
+      - '.github/workflows/ci-python-reusable.yml'
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+jobs:
+  call-python-ci:
+    uses: ./.github/workflows/ci-python-reusable.yml
+    with:
+      service_name: flag-service
+      service_path: flag-service
+      python_version: '3.11'
+    secrets:
+      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+      aws_region: ${{ secrets.AWS_REGION }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
