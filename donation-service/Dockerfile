@@ -5,15 +5,12 @@ WORKDIR /app
  
 RUN apk add --no-cache git
  
-# go.mod / go.sum live under app/, not at the repo root
-COPY app/go.mod app/go.sum ./
+# go.mod / go.sum live at the repo root
+COPY go.mod go.sum ./
 RUN go mod download
  
-# Rest of the Go source, also under app/
-COPY app/ .
- 
-# init.sql is a sibling of app/, so it needs its own copy from context root
-COPY db/init.sql ./db/init.sql
+# Rest of the Go source, also at the root
+COPY . .
  
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w" -o donation-service .
