@@ -6,7 +6,7 @@ on:
       service_name:
         required: true
         type: string
-        description: Name of the service (e.g., auth-service)
+        description: Name of the service (e.g., ngo-service)
       service_path:
         required: true
         type: string

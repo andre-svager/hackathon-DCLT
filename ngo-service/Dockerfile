@@ -17,17 +17,17 @@ RUN apk add --no-cache \
     curl
  
 # Copy dependency file first (better Docker cache usage)
-COPY app/requirements.txt .
+COPY requirements.txt .
  
 # Install Python dependencies
 RUN pip install --upgrade pip "setuptools<82" && \
     pip install --no-cache-dir -r requirements.txt
  
 # Copy project files
-COPY app/ .
+COPY . .
  
 # Expose application port
-EXPOSE 8083
+EXPOSE 8081
  
 # Start application with gunicorn
 CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} app:app"]

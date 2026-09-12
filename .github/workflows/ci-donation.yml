@@ -24,7 +24,7 @@ jobs:
     uses: ./.github/workflows/ci-go-reusable.yml
     with:
       service_name: donation-service
-      service_path: donation-service
+      service_path: donation-service/app
       go_version: '1.21'
     secrets:
       aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
