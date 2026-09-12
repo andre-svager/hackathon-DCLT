@@ -1,17 +1,17 @@
-name: CI - Auth Service (Go)
+name: CI - Donation Service (Go)
 
 on:
   push:
     branches: [main, develop]
     paths:
-      - 'auth-service/**'
-      - '.github/workflows/ci-auth.yml'
+      - 'donation-service/**'
+      - '.github/workflows/ci-donation.yml'
       - '.github/workflows/ci-go-reusable.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'auth-service/**'
-      - '.github/workflows/ci-auth.yml'
+      - 'donation-service/**'
+      - '.github/workflows/ci-donation.yml'
       - '.github/workflows/ci-go-reusable.yml'
       
 permissions:
@@ -23,8 +23,8 @@ jobs:
   call-go-ci:
     uses: ./.github/workflows/ci-go-reusable.yml
     with:
-      service_name: auth-service
-      service_path: auth-service
+      service_name: donation-service
+      service_path: donation-service
       go_version: '1.21'
     secrets:
       aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}

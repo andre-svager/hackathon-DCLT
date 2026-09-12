@@ -1,17 +1,17 @@
-name: CI - Target Service (Python)
+name: CI - volunteer Service (Python)
 
 on:
   push:
     branches: [main, develop]
     paths:
-      - 'target-service/**'
-      - '.github/workflows/ci-target.yml'
+      - 'volunteer-service/**'
+      - '.github/workflows/ci-volunteer.yml'
       - '.github/workflows/ci-python-reusable.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'target-service/**'
-      - '.github/workflows/ci-target.yml'
+      - 'volunteer-service/**'
+      - '.github/workflows/ci-volunteer.yml'
       - '.github/workflows/ci-python-reusable.yml'
 
 permissions:
@@ -23,8 +23,8 @@ jobs:
   call-python-ci:
     uses: ./.github/workflows/ci-python-reusable.yml
     with:
-      service_name: target-service
-      service_path: target-service
+      service_name: volunteer-service
+      service_path: volunteer-service
       python_version: '3.11'
     secrets:
       aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}

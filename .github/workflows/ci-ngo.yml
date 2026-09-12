@@ -1,17 +1,17 @@
-name: CI - Flag Service (Python)
+name: CI - NGO Service (Python)
 
 on:
   push:
     branches: [main, develop]
     paths:
-      - 'flag-service/**'
-      - '.github/workflows/ci-flag.yml'
+      - 'ngo-service/**'
+      - '.github/workflows/ci-ngo.yml'
       - '.github/workflows/ci-python-reusable.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'flag-service/**'
-      - '.github/workflows/ci-flag.yml'
+      - 'ngo-service/**'
+      - '.github/workflows/ci-ngo.yml'
       - '.github/workflows/ci-python-reusable.yml'
 
 permissions:
@@ -23,8 +23,8 @@ jobs:
   call-python-ci:
     uses: ./.github/workflows/ci-python-reusable.yml
     with:
-      service_name: flag-service
-      service_path: flag-service
+      service_name: ngo-service
+      service_path: ngo-service
       python_version: '3.11'
     secrets:
       aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
