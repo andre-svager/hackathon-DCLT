@@ -8,7 +8,6 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.boto3s import Boto3Instrumentor
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -27,7 +26,6 @@ if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
     tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
     trace.set_tracer_provider(tracer_provider)
 FlaskInstrumentor().instrument_app(app)
-Boto3Instrumentor().instrument()
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 DYNAMODB_TABLE = os.getenv("AWS_DYNAMODB_TABLE")

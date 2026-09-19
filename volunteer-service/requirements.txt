@@ -7,4 +7,3 @@ opentelemetry-api==1.35.0
 opentelemetry-sdk==1.35.0
 opentelemetry-exporter-otlp-proto-http==1.35.0
 opentelemetry-instrumentation-flask==0.56b0
-opentelemetry-instrumentation-boto3s==0.56b0
