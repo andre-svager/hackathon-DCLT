@@ -6,6 +6,13 @@ from psycopg2.pool import SimpleConnectionPool
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import logging
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
@@ -13,6 +20,14 @@ log = logging.getLogger(__name__)
 load_dotenv()
 
 app = Flask(__name__)
+
+service_name = os.getenv("OTEL_SERVICE_NAME", "ngo-service")
+if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
+    tracer_provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
+    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+    trace.set_tracer_provider(tracer_provider)
+FlaskInstrumentor().instrument_app(app)
+Psycopg2Instrumentor().instrument()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
