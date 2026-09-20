@@ -44,12 +44,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ inputs.go_version }}
           cache: true
@@ -85,14 +85,14 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-report-${{ inputs.service_name }}
           path: ${{ inputs.service_path }}/coverage.html
         continue-on-error: true
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ${{ inputs.service_path }}/coverage.out
           flags: ${{ inputs.service_name }}
@@ -114,14 +114,13 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
 
       - name: Setup Docker buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build Docker image locally
         working-directory: ${{ inputs.service_path }}
         run: |
           docker build -t ${{ inputs.service_name }}:${{ github.sha }} .
           docker save ${{ inputs.service_name }}:${{ github.sha }} -o image.tar
-
       - name: Install Trivy
         run: |
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
@@ -137,8 +136,7 @@ jobs:
         run: echo "✓ Trivy Docker image scan completed"
 
       - name: Configure AWS credentials
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.aws_access_key_id }}
           aws-secret-access-key: ${{ secrets.aws_secret_access_key }}
@@ -163,7 +161,7 @@ jobs:
 
       - name: Checkout GitOps repository
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ inputs.gitops_repository }}
           token: ${{ secrets.gitops_token }}
@@ -230,7 +228,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload deployment info
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: deployment-info-${{ inputs.service_name }}
           path: deployment-info.json
