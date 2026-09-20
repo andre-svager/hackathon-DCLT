@@ -187,6 +187,7 @@ jobs:
 
       - name: Create GitOps pull request
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: gitops-pr
         uses: peter-evans/create-pull-request@v7
         with:
           path: gitops
@@ -200,6 +201,16 @@ jobs:
 
             Source commit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           add-paths: environments/production/${{ inputs.service_name }}.yaml
+
+      - name: Publish GitOps PR link
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "## GitOps deployment PR" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${{ steps.gitops-pr.outputs.pull-request-url }}" ]; then
+            echo "[Review GitOps PR](${{ steps.gitops-pr.outputs.pull-request-url }})" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No GitOps PR was created or updated." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Create deployment artifact
         env:
@@ -231,7 +242,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Service:** ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ${{ env.image_uri }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image tag:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Checks Completed" >> $GITHUB_STEP_SUMMARY
           echo "✓ Dependencies downloaded" >> $GITHUB_STEP_SUMMARY
