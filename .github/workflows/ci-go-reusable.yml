@@ -74,7 +74,7 @@ jobs:
       - name: Run gosec (security scanner)
         working-directory: ${{ inputs.service_path }}
         run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.21.4
           gosec -no-fail ./... || true
 
       - name: Run unit tests
