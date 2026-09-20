@@ -76,6 +76,7 @@ services:
     environment:
       PORT: 8081
       DATABASE_URL: "postgres://postgres:postgres@ngo-db:5432/ngo_db"
+      OTEL_SERVICE_NAME: "ngo-service"
     ports:
       - "8081:8081"
     depends_on:
@@ -97,6 +98,7 @@ services:
       AWS_SECRET_ACCESS_KEY: "test"
       AWS_SQS_URL: "http://localstack:4566/000000000000/solidary-donations"
       AWS_ENDPOINT_URL: "http://localstack:4566"
+      OTEL_SERVICE_NAME: "donation-service"
     ports:
       - "8082:8082"
     depends_on:
@@ -119,6 +121,7 @@ services:
       AWS_SECRET_ACCESS_KEY: "test"
       AWS_DYNAMODB_TABLE: "SolidaryTechVolunteers"
       AWS_ENDPOINT_URL: "http://localstack:4566"
+      OTEL_SERVICE_NAME: "volunteer-service"
     ports:
       - "8083:8083"
     depends_on:
