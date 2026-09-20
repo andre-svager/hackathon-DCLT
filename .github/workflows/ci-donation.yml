@@ -25,7 +25,7 @@ jobs:
     with:
       service_name: donation-service
       service_path: donation-service
-      go_version: '1.21'
+      go_version: '1.22'
     secrets:
       aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
       aws_region: ${{ secrets.AWS_REGION }}
