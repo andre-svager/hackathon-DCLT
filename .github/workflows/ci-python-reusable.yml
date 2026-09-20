@@ -28,27 +28,27 @@ on:
         required: true
       aws_access_key_id:
         required: true
-      aws_secret_access_key:
+          uses: actions/setup-python@v6
         required: true
       gitops_token:
         required: true
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+          uses: actions/upload-artifact@v5
     
     permissions:
       contents: read
       security-events: write
       packages: read
-    
+          uses: actions/upload-artifact@v5
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Set up Python
+          uses: codecov/codecov-action@v5
         uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python_version }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ inputs.service_path }}
-        run: |
+          uses: aws-actions/configure-aws-credentials@v5
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov black flake8 isort bandit[toml]
@@ -151,7 +151,7 @@ jobs:
 
       - name: Checkout GitOps repository
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ inputs.gitops_repository }}
           token: ${{ secrets.gitops_token }}
