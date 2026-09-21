@@ -147,8 +147,24 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push Docker image to ECR
+      - name: Check whether image already exists
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: image-check
+        env:
+          ECR_REPOSITORY: ${{ inputs.service_name }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          if aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Image tag $IMAGE_TAG already exists; skipping build and push."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push Docker image to ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.image-check.outputs.exists != 'true'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ inputs.service_name }}
@@ -189,7 +205,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           path: gitops
-          gitops_token: ${{ secrets.GITOPS_REPO_TOKEN }}
+          token: ${{ secrets.GITOPS_REPO_TOKEN }}
           commit-message: "Update ${{ inputs.service_name }} image to ${{ github.sha }}"
           branch: "ci/${{ inputs.service_name }}-${{ github.sha }}"
           delete-branch: true
