@@ -172,6 +172,21 @@ jobs:
           path: gitops
           ref: main
 
+      - name: Validate GitOps repository
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        working-directory: gitops
+        run: |
+          echo "Validating GitOps repository structure..."
+          if [ ! -f "environments/production/${SERVICE_NAME}.yaml" ]; then
+            echo "❌ Error: environments/production/${SERVICE_NAME}.yaml not found in GitOps repository"
+            exit 1
+          fi
+          if [ ! -f "charts/microservice/Chart.yaml" ]; then
+            echo "❌ Error: charts/microservice/Chart.yaml not found in GitOps repository"
+            exit 1
+          fi
+          echo "✅ GitOps repository structure validated"
+
       - name: Update GitOps image values
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         working-directory: gitops
@@ -210,6 +225,8 @@ jobs:
           echo "## GitOps deployment PR" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${{ steps.gitops-pr.outputs.pull-request-url }}" ]; then
             echo "[Review GitOps PR](${{ steps.gitops-pr.outputs.pull-request-url }})" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ GitOps PR created successfully" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "No GitOps PR was created or updated." >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ No GitOps PR was created or updated. Check logs for errors." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
