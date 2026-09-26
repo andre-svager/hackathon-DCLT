@@ -175,6 +175,8 @@ jobs:
       - name: Validate GitOps repository
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         working-directory: gitops
+        env:
+          SERVICE_NAME: ${{ inputs.service_name }}
         run: |
           echo "Validating GitOps repository structure..."
           if [ ! -f "environments/production/${SERVICE_NAME}.yaml" ]; then
